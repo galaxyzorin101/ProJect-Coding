@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="theme-color" content="#101113">
+	<title>One UI Launcher</title>
+	<script src="https://cdn.tailwindcss.com"></script>
+	<script>
+		tailwind.config = {
+			theme: {
+				extend: {
+					colors: {
+						ink: '#f4f5f7',
+						muted: '#a3a6ae',
+						panel: '#1b1d21',
+						surface: '#25272d',
+						accent: '#9eb9ff'
+					},
+					fontFamily: { sans: ['"Plus Jakarta Sans"', 'ui-sans-serif', 'system-ui'] }
+				}
+			}
+		};
+	</script>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+	<style>
+		:root { color-scheme: dark; }
+		* { box-sizing: border-box; }
+		body {
+			min-height: 100vh;
+			margin: 0;
+			background: #090a0c;
+			color: #f4f5f7;
+			font-family: 'Plus Jakarta Sans', sans-serif;
+			transition: background .35s ease;
+		}
+		button, input { font: inherit; }
+		button { -webkit-tap-highlight-color: transparent; }
+		.mono { font-family: 'DM Mono', monospace; }
+		.phone-shell {
+			background: radial-gradient(circle at 50% -10%, #30343d 0, #17191d 31%, #0d0e10 72%);
+			box-shadow: 0 30px 100px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.05);
+			transition: background .35s ease, box-shadow .35s ease;
+		}
+		.glass { background: rgba(34, 36, 42, .82); backdrop-filter: blur(22px); }
+		.modal-backdrop { background: rgba(4, 5, 7, .72); backdrop-filter: blur(12px); }
+		.switch { appearance: none; width: 38px; height: 22px; border-radius: 999px; background: rgba(255,255,255,.14); position: relative; transition: background .2s ease; }
+		.switch::after { content: ''; position: absolute; width: 16px; height: 16px; left: 3px; top: 3px; border-radius: 50%; background: #fff; transition: transform .2s ease; }
+		.switch:checked { background: #8faeff; }
+		.switch:checked::after { transform: translateX(16px); background: #10131b; }
+		.theme-glass .phone-shell { background: linear-gradient(145deg, rgba(64, 76, 104, .9), rgba(25, 30, 45, .95)); }
+		.theme-glass .glass { background: rgba(255,255,255,.12); }
+		.theme-cyberpunk .phone-shell { background: radial-gradient(circle at 80% 5%, #2e1647, #100d1b 45%, #08090d); }
+		.theme-cyberpunk .glass { background: rgba(35, 20, 53, .82); border-color: rgba(255, 61, 180, .2); }
+		.theme-oled .phone-shell { background: #000; }
+		.theme-oled .glass { background: rgba(13, 13, 15, .96); }
+		.wallpaper { background-position: center; background-size: cover; }
+		.app-tile { transition: transform .18s ease, filter .18s ease; }
+		.app-tile:hover { transform: translateY(-3px); filter: brightness(1.12); }
+		.app-tile:active { transform: scale(.94); }
+		.icon-shadow { box-shadow: 0 10px 20px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.2); }
+		.toast { animation: toast-in .25s ease-out; }
+		@keyframes toast-in { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
+		@media (min-width: 640px) { .phone-shell { min-height: 780px; } }
+	</style>
+</head>
+<body class="flex min-h-screen items-center justify-center sm:p-6">
+	<main class="phone-shell relative flex min-h-screen w-full max-w-[430px] flex-col overflow-hidden sm:min-h-[780px] sm:rounded-[38px] sm:border sm:border-white/10">
+		<div class="pointer-events-none absolute -left-24 top-20 h-72 w-72 rounded-full bg-indigo-400/5 blur-3xl"></div>
+		<div class="pointer-events-none absolute -right-20 top-[42%] h-64 w-64 rounded-full bg-cyan-400/5 blur-3xl"></div>
+
+		<header class="relative z-10 flex items-center justify-between px-7 pt-5 text-[12px] font-semibold tracking-wide text-white/90">
+			<span id="status-time" class="mono">09:41</span>
+			<div class="flex items-center gap-3 text-white/75" aria-label="Phone status">
+				<span class="relative inline-flex h-3 w-[17px] items-end gap-[2px]" aria-label="Wi-Fi connected">
+					<i class="h-1 w-[3px] rounded-sm bg-white/70"></i><i class="h-2 w-[3px] rounded-sm bg-white/80"></i><i class="h-3 w-[3px] rounded-sm bg-white"></i>
+				</span>
+				<span class="flex items-center gap-1"><span class="mono text-[10px]">84</span><span class="relative h-[10px] w-[18px] rounded-[3px] border border-white/70"><span class="absolute inset-[2px] rounded-[1px] bg-white/85"></span><span class="absolute -right-[3px] top-[2px] h-[4px] w-[2px] rounded-r bg-white/70"></span></span></span>
+			</div>
+		</header>
+
+		<section class="relative z-10 flex-1 px-6 pb-5 pt-8">
+			<div class="mb-7 flex items-end justify-between px-1">
+				<div>
+					<p id="greeting" class="mb-2 text-sm font-medium text-white/55">Good morning</p>
+					<h1 id="date-heading" class="text-[2rem] font-semibold leading-none tracking-[-0.06em] text-white">Tuesday, Sep 23</h1>
+				</div>
+				<div class="flex gap-2">
+					<button id="drawer-button" class="grid h-11 w-11 place-items-center rounded-full border border-white/10 bg-white/10 text-white/75 transition hover:bg-white/15" aria-label="Open app drawer"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 5h3v3H5zM10.5 5h3v3h-3zM16 5h3v3h-3zM5 10.5h3v3H5zM10.5 10.5h3v3h-3zM16 10.5h3v3h-3zM5 16h3v3H5zM10.5 16h3v3h-3zM16 16h3v3h-3z"></path></svg></button>
+					<button id="profile-button" class="grid h-11 w-11 place-items-center rounded-full border border-white/10 bg-white/10 text-sm font-semibold text-white/80 transition hover:bg-white/15" aria-label="Open launcher settings">JD</button>
+				</div>
+			</div>
+
+			<div id="widget-grid" class="mb-4 grid grid-cols-2 gap-3">
+				<button id="weather-widget" data-widget="weather" class="glass col-span-2 rounded-[24px] border border-white/[.07] p-4 text-left transition hover:border-white/15" aria-label="Live weather">
+					<div class="flex items-center justify-between"><div><p class="text-xs font-medium text-white/50">Current weather</p><p id="weather-place" class="mt-1 text-[11px] text-white/35">Locating your city...</p></div><span id="weather-icon" class="text-3xl">⌁</span></div>
+					<div class="mt-3 flex items-end gap-3"><span id="weather-temp" class="mono text-[2.2rem] leading-none tracking-[-.08em] text-white">--°</span><span id="weather-condition" class="pb-1 text-xs text-white/45">Waiting for location</span></div>
+				</button>
+				<button id="clock-widget" data-widget="clock" class="glass rounded-[24px] border border-white/[.07] p-4 text-left transition hover:border-white/15" aria-label="Digital clock widget">
+					<div class="mb-6 flex items-center justify-between"><span class="text-xs font-medium text-white/50">Home</span><span class="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_10px_#6ee7b7]"></span></div>
+					<div id="widget-time" class="mono text-[1.8rem] leading-none tracking-[-.08em] text-white">09:41</div><div id="widget-date" class="mt-2 text-[10px] text-white/40">September 23, 2026</div>
+				</button>
+				<div id="music-widget" data-widget="music" class="glass rounded-[24px] border border-white/[.07] p-4 text-left">
+					<div class="mb-5 flex items-center justify-between"><span class="text-xs font-medium text-white/50">Now playing</span><span class="text-[10px] text-white/35">Pocket FM</span></div>
+					<p id="track-title" class="truncate text-sm font-semibold text-white/85">Midnight City</p><p class="mt-1 truncate text-[10px] text-white/40">M83 · Hurry Up, We're Dreaming</p>
+					<div class="mt-4 h-1 overflow-hidden rounded-full bg-white/10"><div id="music-progress" class="h-full w-[38%] rounded-full bg-accent transition-[width] duration-1000"></div></div>
+					<div class="mt-3 flex items-center justify-between"><span id="music-elapsed" class="mono text-[9px] text-white/35">01:18</span><button id="music-toggle" class="grid h-8 w-8 place-items-center rounded-full bg-white text-[#202126]" aria-label="Play or pause music"><svg id="music-icon" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg></button><span class="mono text-[9px] text-white/35">03:46</span></div>
+				</div>
+				<div id="notes-widget" data-widget="notes" class="glass rounded-[24px] border border-white/[.07] p-4 text-left"><div class="mb-3 flex items-center justify-between"><span class="text-xs font-medium text-white/50">Quick note</span><span class="text-[10px] text-amber-200/60">Pinned</span></div><textarea id="quick-note" class="h-14 w-full resize-none bg-transparent text-xs leading-relaxed text-white/75 outline-none placeholder:text-white/25" placeholder="Write something down..." maxlength="120"></textarea></div>
+				<div id="battery-widget" data-widget="battery" class="glass rounded-[24px] border border-white/[.07] p-4 text-left"><div class="mb-4 flex items-center justify-between"><span class="text-xs font-medium text-white/50">Battery</span><span id="battery-source" class="text-[10px] text-white/35">Device</span></div><div class="flex items-center gap-3"><span id="battery-icon" class="text-2xl text-emerald-300">▰</span><div><p id="battery-level" class="mono text-xl text-white">84%</p><p id="battery-status" class="mt-1 text-[10px] text-white/40">Power ready</p></div></div></div>
+				<div id="storage-widget" data-widget="storage" class="glass rounded-[24px] border border-white/[.07] p-4 text-left"><div class="mb-3 flex items-center justify-between"><span class="text-xs font-medium text-white/50">Storage</span><span class="text-[10px] text-white/35">Device</span></div><div class="flex items-center gap-3"><div class="relative h-14 w-14 shrink-0 rounded-full" style="background: conic-gradient(#9eb9ff 0 68%, rgba(255,255,255,.08) 68% 100%);"><div class="absolute inset-[5px] grid place-items-center rounded-full bg-[#24262c]"><span class="mono text-xs text-white">68%</span></div></div><p class="text-[10px] leading-relaxed text-white/40">87.1 GB<br>of 128 GB</p></div></div>
+			</div>
+
+			<label class="glass mb-7 flex h-12 items-center gap-3 rounded-full border border-white/[.07] px-4 text-white/45 focus-within:border-white/20" for="search-input">
+				<svg class="h-[18px] w-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 4.5 4.5"></path></svg>
+				<input id="search-input" class="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/35" placeholder="Search apps" autocomplete="off">
+				<span class="rounded-md border border-white/10 px-1.5 py-0.5 text-[10px] text-white/30">⌕</span>
+			</label>
+
+			<div class="mb-3 flex items-center justify-between px-1"><h2 class="text-xs font-semibold uppercase tracking-[.18em] text-white/40">Favorites</h2><button id="edit-button" class="text-[11px] text-accent/80 transition hover:text-accent">Edit</button></div>
+			<div id="app-grid" class="grid grid-cols-5 gap-x-2 gap-y-5">
+				<button class="app-tile flex flex-col items-center gap-2" data-app="Gallery"><span class="icon-shadow grid h-[52px] w-[52px] place-items-center rounded-[17px] bg-gradient-to-br from-[#ffb86c] via-[#f26d91] to-[#9f76ff]"><svg viewBox="0 0 24 24" class="h-7 w-7" fill="none" stroke="white" stroke-width="1.6"><circle cx="8" cy="8" r="2"></circle><path d="m3.5 18 5.2-5 3.2 3 2.2-2.2 6.4 6.2M3 4.5A1.5 1.5 0 0 1 4.5 3h15A1.5 1.5 0 0 1 21 4.5v15a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 19.5z"></path></svg></span><span class="text-[11px] text-white/65">Gallery</span></button>
+				<button class="app-tile flex flex-col items-center gap-2" data-app="Settings"><span class="icon-shadow grid h-[52px] w-[52px] place-items-center rounded-[17px] bg-[#59616d]"><svg viewBox="0 0 24 24" class="h-7 w-7" fill="none" stroke="white" stroke-width="1.7"><path d="M12 8.4a3.6 3.6 0 1 0 0 7.2 3.6 3.6 0 0 0 0-7.2Z"></path><path d="m19.2 13.5 1.2 1-.8 1.5-1.5-.3a7.5 7.5 0 0 1-1.5 1.1l-.3 1.5h-1.8l-.7-1.4a7.5 7.5 0 0 1-1.8 0l-.7 1.4h-1.8l-.3-1.5a7.5 7.5 0 0 1-1.5-1.1l-1.5.3-.8-1.5 1.2-1a7.5 7.5 0 0 1 0-2.1l-1.2-1 .8-1.5 1.5.3a7.5 7.5 0 0 1 1.5-1.1l.3-1.5h1.8l.7 1.4a7.5 7.5 0 0 1 1.8 0l.7-1.4h1.8l.3 1.5a7.5 7.5 0 0 1 1.5 1.1l1.5-.3.8 1.5-1.2 1a7.5 7.5 0 0 1 0 2.1Z"></path></svg></span><span class="text-[11px] text-white/65">Settings</span></button>
+				<button class="app-tile flex flex-col items-center gap-2" data-app="Camera"><span class="icon-shadow grid h-[52px] w-[52px] place-items-center rounded-[17px] bg-[#293038]"><svg viewBox="0 0 24 24" class="h-7 w-7" fill="none" stroke="white" stroke-width="1.7"><path d="M4 8.5A2.5 2.5 0 0 1 6.5 6h2l1-1.5h5L15.5 6h2A2.5 2.5 0 0 1 20 8.5v8A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5z"></path><circle cx="12" cy="12.5" r="3.2"></circle></svg></span><span class="text-[11px] text-white/65">Camera</span></button>
+				<button class="app-tile flex flex-col items-center gap-2" data-app="Browser"><span class="icon-shadow grid h-[52px] w-[52px] place-items-center rounded-[17px] bg-gradient-to-br from-[#76c8ff] to-[#4673ef]"><svg viewBox="0 0 24 24" class="h-7 w-7" fill="none" stroke="white" stroke-width="1.5"><circle cx="12" cy="12" r="8.5"></circle><path d="M3.7 12h16.6M12 3.5c2.2 2.4 3.3 5.2 3.3 8.5s-1.1 6.1-3.3 8.5c-2.2-2.4-3.3-5.2-3.3-8.5S9.8 5.9 12 3.5Z"></path></svg></span><span class="text-[11px] text-white/65">Browser</span></button>
+				<button class="app-tile flex flex-col items-center gap-2" data-app="YouTube"><span class="icon-shadow grid h-[52px] w-[52px] place-items-center rounded-[17px] bg-[#f02d3a]"><svg viewBox="0 0 24 24" class="h-7 w-7" fill="white"><path d="M20.2 7.1a2.6 2.6 0 0 0-1.8-1.8C16.8 4.9 12 4.9 12 4.9s-4.8 0-6.4.4a2.6 2.6 0 0 0-1.8 1.8C3.4 8.7 3.4 12 3.4 12s0 3.3.4 4.9a2.6 2.6 0 0 0 1.8 1.8c1.6.4 6.4.4 6.4.4s4.8 0 6.4-.4a2.6 2.6 0 0 0 1.8-1.8c.4-1.6.4-4.9.4-4.9s0-3.3-.4-4.9ZM10.2 15.5v-7l5.8 3.5-5.8 3.5Z"></path></svg></span><span class="text-[11px] text-white/65">YouTube</span></button>
+			</div>
+			<p id="empty-state" class="mt-8 hidden text-center text-sm text-white/35">No apps found</p>
+		</section>
+
+		<nav class="glass relative z-10 mx-5 mb-5 flex h-[76px] items-center justify-around rounded-[27px] border border-white/[.08] px-3" aria-label="Dock">
+			<button class="app-tile grid h-12 w-12 place-items-center rounded-2xl bg-[#273429] text-emerald-300" data-app="Phone" aria-label="Phone"><svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7.2 4.5 5 5.8a2 2 0 0 0-.9 2.4c1.7 5.4 5.4 9.1 10.8 10.8a2 2 0 0 0 2.4-.9l1.3-2.2-3.4-2.3-1.8 1.6a13.5 13.5 0 0 1-5.3-5.3l1.6-1.8z"></path></svg></button>
+			<button class="app-tile grid h-12 w-12 place-items-center rounded-2xl bg-[#30313b] text-white/85" data-app="Messages" aria-label="Messages"><svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 5.5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H9l-4 3v-3.5a2 2 0 0 1-2-2v-7.5a2 2 0 0 1 2-2Z"></path><path d="M7 10h10M7 13h6"></path></svg></button>
+			<button class="app-tile grid h-12 w-12 place-items-center rounded-2xl bg-[#313136] text-white/85" data-app="Contacts" aria-label="Contacts"><svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3"></circle><path d="M5.5 19a6.5 6.5 0 0 1 13 0M4 4h16v16H4z"></path></svg></button>
+			<button class="app-tile grid h-12 w-12 place-items-center rounded-2xl bg-[#31323c] text-white/85" data-app="Maps" aria-label="Maps"><svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m4 6 5-2 6 2 5-2v14l-5 2-6-2-5 2zM9 4v14M15 6v14"></path></svg></button>
+		</nav>
+		<div class="relative z-10 mx-auto mb-2 h-1 w-28 rounded-full bg-white/50"></div>
+		<div id="toast" class="pointer-events-none absolute bottom-28 left-1/2 hidden -translate-x-1/2 rounded-full bg-white px-4 py-2 text-xs font-semibold text-[#191a1d] shadow-xl"></div>
+		<div id="settings-modal" class="modal-backdrop absolute inset-0 z-30 hidden items-end p-4 sm:items-center">
+			<div class="glass w-full rounded-[28px] border border-white/10 p-5 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+				<div class="mb-5 flex items-center justify-between"><div><p class="text-[10px] uppercase tracking-[.18em] text-accent/70">Launcher lab</p><h2 id="settings-title" class="mt-1 text-xl font-semibold">Customize home</h2></div><button id="close-settings" class="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white/70" aria-label="Close settings">×</button></div>
+				<label class="mb-4 block"><span class="mb-2 block text-xs text-white/45">Wallpaper image</span><input id="wallpaper-input" type="file" accept="image/*" class="block w-full text-xs text-white/55 file:mr-3 file:rounded-full file:border-0 file:bg-white/10 file:px-3 file:py-2 file:text-xs file:text-white/75"></label>
+				<div class="mb-5"><p class="mb-2 text-xs text-white/45">Theme preset</p><div class="grid grid-cols-2 gap-2"><button class="theme-choice rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-left text-xs" data-theme="dark">OneUI Dark</button><button class="theme-choice rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-left text-xs" data-theme="glass">Glassmorphism</button><button class="theme-choice rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-left text-xs" data-theme="cyberpunk">Cyberpunk</button><button class="theme-choice rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-left text-xs" data-theme="oled">OLED Black</button></div></div>
+				<div><p class="mb-2 text-xs text-white/45">Home widgets</p><div class="space-y-2"> <label class="flex items-center justify-between rounded-xl bg-white/5 px-3 py-2 text-xs text-white/70">Weather <input class="switch widget-toggle" type="checkbox" data-widget-toggle="weather" checked></label><label class="flex items-center justify-between rounded-xl bg-white/5 px-3 py-2 text-xs text-white/70">Music control <input class="switch widget-toggle" type="checkbox" data-widget-toggle="music" checked></label><label class="flex items-center justify-between rounded-xl bg-white/5 px-3 py-2 text-xs text-white/70">Quick notes <input class="switch widget-toggle" type="checkbox" data-widget-toggle="notes" checked></label><label class="flex items-center justify-between rounded-xl bg-white/5 px-3 py-2 text-xs text-white/70">Battery status <input class="switch widget-toggle" type="checkbox" data-widget-toggle="battery" checked></label></div></div>
+			</div>
+		</div>
+		<div id="drawer-modal" class="modal-backdrop absolute inset-0 z-20 hidden items-end p-4 sm:items-center">
+			<div class="glass w-full rounded-[28px] border border-white/10 p-5 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="drawer-title"><div class="mb-5 flex items-center justify-between"><div><p class="text-[10px] uppercase tracking-[.18em] text-accent/70">All apps</p><h2 id="drawer-title" class="mt-1 text-xl font-semibold">App drawer</h2></div><button id="close-drawer" class="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white/70" aria-label="Close app drawer">×</button></div><div id="drawer-grid" class="grid grid-cols-5 gap-y-5"></div></div>
+		</div>
+	</main>
+	<script>
+		const pad = (value) => String(value).padStart(2, '0');
+		const settingsKey = 'one-ui-launcher-settings';
+		const $ = (selector) => document.querySelector(selector);
+		const statusTime = $('#status-time');
+		const widgetTime = $('#widget-time');
+		const widgetDate = $('#widget-date');
+		const dateHeading = $('#date-heading');
+		const greeting = $('#greeting');
+		const toast = $('#toast');
+		const search = $('#search-input');
+		const apps = [...document.querySelectorAll('[data-app]')];
+		const favoriteApps = apps.filter((app) => app.closest('#app-grid'));
+		let savedSettings = { theme: 'dark', widgets: { weather: true, music: true, notes: true, battery: true } };
+		try { savedSettings = { ...savedSettings, ...JSON.parse(localStorage.getItem(settingsKey) || '{}') }; } catch (error) { console.warn('Launcher settings unavailable', error); }
+
+		function persistSettings() { localStorage.setItem(settingsKey, JSON.stringify(savedSettings)); }
+		function showToast(message) {
+			toast.textContent = message;
+			toast.classList.remove('hidden');
+			toast.classList.add('toast');
+			window.clearTimeout(showToast.timer);
+			showToast.timer = window.setTimeout(() => toast.classList.add('hidden'), 1800);
+		}
+		function updateTime() {
+			const now = new Date();
+			const hour = now.getHours();
+			const time = `${pad(hour)}:${pad(now.getMinutes())}`;
+			statusTime.textContent = time;
+			widgetTime.textContent = time;
+			widgetDate.textContent = now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+			dateHeading.textContent = now.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+			greeting.textContent = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+		}
+		const weatherLabels = { 0: ['Clear sky', '☀️'], 1: ['Mainly clear', '🌤️'], 2: ['Partly cloudy', '⛅'], 3: ['Overcast', '☁️'], 45: ['Foggy', '🌫️'], 48: ['Rime fog', '🌫️'], 51: ['Light drizzle', '🌦️'], 53: ['Drizzle', '🌦️'], 55: ['Heavy drizzle', '🌧️'], 61: ['Light rain', '🌦️'], 63: ['Rain', '🌧️'], 65: ['Heavy rain', '🌧️'], 71: ['Light snow', '🌨️'], 73: ['Snow', '❄️'], 75: ['Heavy snow', '❄️'], 80: ['Rain showers', '🌦️'], 81: ['Rain showers', '🌧️'], 82: ['Heavy showers', '⛈️'], 95: ['Thunderstorm', '⛈️'], 96: ['Storm and hail', '⛈️'], 99: ['Storm and hail', '⛈️'] };
+		function showWeatherError(message) { $('#weather-place').textContent = message; $('#weather-condition').textContent = 'Tap to retry'; $('#weather-widget').addEventListener('click', loadWeather, { once: true }); }
+		async function loadWeather() {
+			if (!navigator.geolocation) return showWeatherError('Location unavailable');
+			$('#weather-place').textContent = 'Requesting location...';
+			navigator.geolocation.getCurrentPosition(async ({ coords }) => {
+				try {
+					const { latitude, longitude } = coords;
+					const [forecastResponse, placeResponse] = await Promise.all([
+						fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code&temperature_unit=fahrenheit`),
+						fetch(`https://geocoding-api.open-meteo.com/v1/reverse?latitude=${latitude}&longitude=${longitude}&count=1&language=en&format=json`)
+					]);
+					const forecast = await forecastResponse.json();
+					const place = await placeResponse.json();
+					const current = forecast.current;
+					const [condition, icon] = weatherLabels[current.weather_code] || ['Current conditions', '🌡️'];
+					$('#weather-temp').textContent = `${Math.round(current.temperature_2m)}°`;
+					$('#weather-condition').textContent = condition;
+					$('#weather-icon').textContent = icon;
+					const result = place.results?.[0];
+					$('#weather-place').textContent = result ? `${result.name}${result.admin1 ? `, ${result.admin1}` : ''}` : `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
+				} catch (error) { showWeatherError('Weather service unavailable'); }
+			}, () => showWeatherError('Location permission needed'), { enableHighAccuracy: false, timeout: 8000 });
+		}
+		function applyTheme(theme) {
+			document.body.classList.remove('theme-glass', 'theme-cyberpunk', 'theme-oled');
+			if (theme !== 'dark') document.body.classList.add(`theme-${theme}`);
+			savedSettings.theme = theme;
+			persistSettings();
+			document.querySelectorAll('.theme-choice').forEach((button) => button.classList.toggle('border-accent', button.dataset.theme === theme));
+		}
+		function applyWallpaper(dataUrl) { if (dataUrl) document.querySelector('main').classList.add('wallpaper'); document.querySelector('main').style.backgroundImage = dataUrl ? `linear-gradient(rgba(8,9,12,.5), rgba(8,9,12,.72)), url(${dataUrl})` : ''; }
+		function applyWidgetVisibility() { document.querySelectorAll('[data-widget]').forEach((widget) => widget.classList.toggle('hidden', savedSettings.widgets[widget.dataset.widget] === false)); document.querySelectorAll('.widget-toggle').forEach((toggle) => { toggle.checked = savedSettings.widgets[toggle.dataset.widgetToggle] !== false; }); }
+		function openModal(id) { const modal = $(id); modal.classList.remove('hidden'); modal.classList.add('flex'); }
+		function closeModal(id) { const modal = $(id); modal.classList.add('hidden'); modal.classList.remove('flex'); }
+		function bindSettings() {
+			$('#wallpaper-input').addEventListener('change', (event) => { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = () => { savedSettings.wallpaper = reader.result; persistSettings(); applyWallpaper(reader.result); showToast('Wallpaper saved'); }; reader.readAsDataURL(file); });
+			document.querySelectorAll('.theme-choice').forEach((button) => button.addEventListener('click', () => { applyTheme(button.dataset.theme); showToast(`${button.textContent} applied`); }));
+			document.querySelectorAll('.widget-toggle').forEach((toggle) => toggle.addEventListener('change', () => { savedSettings.widgets[toggle.dataset.widgetToggle] = toggle.checked; persistSettings(); applyWidgetVisibility(); }));
+			$('#profile-button').addEventListener('click', () => openModal('#settings-modal'));
+			$('#close-settings').addEventListener('click', () => closeModal('#settings-modal'));
+		}
+		let musicPlaying = false;
+		function bindMusic() { $('#music-toggle').addEventListener('click', (event) => { event.stopPropagation(); musicPlaying = !musicPlaying; $('#music-icon').innerHTML = musicPlaying ? '<path d="M7 5h3v14H7zM14 5h3v14h-3z"></path>' : '<path d="M8 5v14l11-7z"></path>'; showToast(musicPlaying ? 'Music playing' : 'Music paused'); }); window.setInterval(() => { if (musicPlaying) { const bar = $('#music-progress'); const next = Math.min(100, parseFloat(bar.style.width || '38%') + .4); bar.style.width = `${next}%`; } }, 1000); }
+		function bindNotes() { const note = $('#quick-note'); note.value = localStorage.getItem('one-ui-launcher-note') || ''; note.addEventListener('input', () => localStorage.setItem('one-ui-launcher-note', note.value)); }
+		function bindBattery() { if (!navigator.getBattery) return; navigator.getBattery().then((battery) => { const update = () => { const level = Math.round(battery.level * 100); $('#battery-level').textContent = `${level}%`; $('#battery-status').textContent = battery.charging ? 'Charging now' : 'Power ready'; $('#battery-source').textContent = battery.charging ? 'Charging' : 'Device'; }; update(); battery.addEventListener('levelchange', update); battery.addEventListener('chargingchange', update); }); }
+		const defaultApps = [{ name: 'Camera', icon: '📷' }, { name: 'Phone', icon: '☎' }, { name: 'Settings', icon: '⚙' }, { name: 'Browser', icon: '◎' }, { name: 'YouTube', icon: '▶' }];
+		function renderDrawer(appList) { const grid = $('#drawer-grid'); grid.innerHTML = ''; appList.forEach((app) => { const button = document.createElement('button'); button.className = 'app-tile flex flex-col items-center gap-2'; const icon = document.createElement('span'); icon.className = 'icon-shadow grid h-[52px] w-[52px] place-items-center rounded-[17px] bg-[#343740] text-xl'; if (app.icon && /^https?:|^data:image/.test(app.icon)) { const image = document.createElement('img'); image.src = app.icon; image.alt = ''; image.className = 'h-full w-full rounded-[17px] object-cover'; icon.append(image); } else icon.textContent = app.icon || '▦'; const label = document.createElement('span'); label.className = 'text-[11px] text-white/65'; label.textContent = app.name || app.label || 'App'; button.append(icon, label); button.addEventListener('click', () => showToast(`${label.textContent} selected`)); grid.append(button); }); }
+		async function loadAppDrawer() { const bridge = window.AndroidLauncherBridge; if (bridge) { try { const getter = bridge.getInstalledApps || bridge.getInstalledApplications; const installed = getter ? await Promise.resolve(getter.call(bridge)) : []; renderDrawer(Array.isArray(installed) ? installed.map((app) => ({ name: app.name || app.label || app.packageName, icon: app.icon || app.iconUrl })) : defaultApps); return; } catch (error) { showToast('Native app list unavailable'); } } renderDrawer(defaultApps); }
+		window.loadAppDrawer = loadAppDrawer;
+		function bindLauncher() { search.addEventListener('input', (event) => { const query = event.target.value.toLowerCase().trim(); let visible = 0; favoriteApps.forEach((app) => { const matches = app.dataset.app.toLowerCase().includes(query); app.classList.toggle('hidden', !matches); if (matches) visible += 1; }); $('#empty-state').classList.toggle('hidden', visible !== 0); }); apps.forEach((app) => app.addEventListener('click', () => showToast(`${app.dataset.app} selected`))); $('#edit-button').addEventListener('click', () => openModal('#settings-modal')); $('#drawer-button').addEventListener('click', () => { loadAppDrawer(); openModal('#drawer-modal'); }); $('#close-drawer').addEventListener('click', () => closeModal('#drawer-modal')); }
+		updateTime(); window.setInterval(updateTime, 1000); applyTheme(savedSettings.theme); applyWallpaper(savedSettings.wallpaper); applyWidgetVisibility(); bindSettings(); bindMusic(); bindNotes(); bindBattery(); bindLauncher(); loadWeather(); loadAppDrawer();
+	</script>
+</body>
+</html>
